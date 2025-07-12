@@ -325,6 +325,9 @@ exports.getFeaturedJobs = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 5;
     
+    // Debug logs
+    console.log('Getting featured jobs - limit:', limit);
+    
     const jobs = await Job.findAll({
       where: { 
         is_featured: true, 
@@ -339,11 +342,14 @@ exports.getFeaturedJobs = async (req, res) => {
       limit
     });
 
+    console.log('Getting featured jobs - found count:', jobs.length);
+
     res.status(200).json({
       message: 'Featured jobs retrieved successfully',
       jobs
     });
   } catch (err) {
+    console.error('Error getting featured jobs:', err);
     res.status(500).json({ 
       message: 'Server error', 
       error: err.message 

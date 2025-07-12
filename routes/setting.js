@@ -3,11 +3,19 @@ const router = express.Router();
 const settingController = require('../controller/settingController');
 const multer = require('multer');
 const path = require('path');
+const { authenticateToken } = require('../middleware/authMiddleware');
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const uploadPath = file.fieldname === 'logo' ? 'uploads/settings/logos/' : 'uploads/settings/covers/';
+    let uploadPath;
+    if (file.fieldname === 'logo') {
+      uploadPath = 'uploads/settings/logos/';
+    } else if (file.fieldname === 'coverPhoto') {
+      uploadPath = 'uploads/settings/covers/';
+    } else {
+      uploadPath = 'uploads/settings/';
+    }
     cb(null, uploadPath);
   },
   filename: function (req, file, cb) {
@@ -33,6 +41,26 @@ const upload = multer({
     }
   }
 });
+
+// Error handling middleware for multer
+const handleMulterError = (err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ 
+        message: 'File size too large. Maximum size is 5MB.' 
+      });
+    }
+    return res.status(400).json({ 
+      message: 'File upload error', 
+      error: err.message 
+    });
+  } else if (err) {
+    return res.status(400).json({ 
+      message: err.message 
+    });
+  }
+  next();
+};
 
 /**
  * @swagger
@@ -327,7 +355,7 @@ router.put('/', settingController.updateSettings);
  *       500:
  *         description: Server error
  */
-router.post('/upload-logo', upload.single('logo'), settingController.uploadLogo);
+router.post('/upload-logo', authenticateToken, upload.single('logo'), handleMulterError, settingController.uploadLogo);
 
 /**
  * @swagger
@@ -366,7 +394,7 @@ router.post('/upload-logo', upload.single('logo'), settingController.uploadLogo)
  *       500:
  *         description: Server error
  */
-router.post('/upload-cover', upload.single('coverPhoto'), settingController.uploadCoverPhoto);
+router.post('/upload-cover', authenticateToken, upload.single('coverPhoto'), handleMulterError, settingController.uploadCoverPhoto);
 
 /**
  * @swagger
@@ -453,5 +481,45 @@ router.post('/', settingController.createSetting);
  *         description: Server error
  */
 router.delete('/:id', settingController.deleteSetting);
+
+/**
+ * @swagger
+ * /api/settings/upload-logo1:
+ *   post:
+ *     summary: Upload a new logo for the user (v1)
+ *     tags: [Settings]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               logo:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Logo uploaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 logoUrl:
+ *                   type: string
+ *                   format: uri
+ *       400:
+ *         description: No logo file provided
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.post('/upload-logo1', authenticateToken, upload.single('logo'), handleMulterError, settingController.uploadLogo1);
 
 module.exports = router; 

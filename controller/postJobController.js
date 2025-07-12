@@ -211,12 +211,20 @@ exports.getUserPostedJobs = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
 
+    // Debug logs
+    console.log('Getting user posted jobs - userId:', userId);
+    console.log('Getting user posted jobs - page:', page);
+    console.log('Getting user posted jobs - limit:', limit);
+
     const { count, rows } = await PostJob.findAndCountAll({
       where: { posted_by_user_id: userId },
       order: [['posted_date', 'DESC']],
       limit,
       offset
     });
+
+    console.log('Getting user posted jobs - found count:', count);
+    console.log('Getting user posted jobs - found rows:', rows.length);
 
     res.status(200).json({
       message: 'User posted jobs retrieved successfully',
@@ -229,6 +237,7 @@ exports.getUserPostedJobs = async (req, res) => {
       }
     });
   } catch (err) {
+    console.error('Error getting user posted jobs:', err);
     res.status(500).json({ 
       message: 'Server error', 
       error: err.message 

@@ -3,6 +3,7 @@ const router = express.Router();
 const postJobController = require('../controller/postJobController');
 const multer = require('multer');
 const path = require('path');
+const { authenticateToken } = require('../middleware/authMiddleware');
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -251,6 +252,59 @@ const upload = multer({
  *         description: Server error
  */
 router.get('/', postJobController.listPostJobs);
+
+/**
+ * @swagger
+ * /api/post-jobs/user/my-jobs:
+ *   get:
+ *     summary: Get user's posted jobs
+ *     tags: [PostJob]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: User posted jobs retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 postJobs:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/PostJob'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     currentPage:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *                     totalItems:
+ *                       type: integer
+ *                     itemsPerPage:
+ *                       type: integer
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.get('/user/my-jobs', authenticateToken, postJobController.getUserPostedJobs);
 
 /**
  * @swagger
@@ -545,54 +599,5 @@ router.delete('/:id', postJobController.deletePostJob);
  *         description: Server error
  */
 router.post('/upload-attachments', upload.array('attachments', 5), postJobController.uploadAttachments);
-
-/**
- * @swagger
- * /api/post-jobs/user/my-jobs:
- *   get:
- *     summary: Get user's posted jobs
- *     tags: [PostJob]
- *     parameters:
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           default: 1
- *         description: Page number
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 10
- *         description: Number of items per page
- *     responses:
- *       200:
- *         description: User posted jobs retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                 postJobs:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/PostJob'
- *                 pagination:
- *                   type: object
- *                   properties:
- *                     currentPage:
- *                       type: integer
- *                     totalPages:
- *                       type: integer
- *                     totalItems:
- *                       type: integer
- *                     itemsPerPage:
- *                       type: integer
- *       500:
- *         description: Server error
- */
-router.get('/user/my-jobs', postJobController.getUserPostedJobs);
 
 module.exports = router; 

@@ -5,6 +5,7 @@ const { authenticateToken } = require('../middleware/authMiddleware');
 const multer = require('multer');
 const path = require('path');
 const upload = require('../middleware/uploadMiddleware');
+const { getMulterUpload } = require('../middleware/uploadMiddleware');
 
 // Configure multer for photo uploads
 const storage = multer.diskStorage({
@@ -594,7 +595,14 @@ router.delete('/:id', authenticateToken, candidateController.deleteCandidate);
  *       500:
  *         description: Server error
  */
-router.post('/upload-photo', authenticateToken, uploadPhoto.single('photo'), candidateController.uploadPhoto);
+router.post('/upload-photo', authenticateToken, (req, res, next) => {
+  getMulterUpload({
+    entity: 'candidates',
+    type: 'photos',
+    id: req.user.id,
+    allowedTypes: ['image/jpeg', 'image/png', 'image/gif']
+  }).single('photo')(req, res, next);
+}, candidateController.uploadPhoto);
 
 /**
  * @swagger
@@ -773,8 +781,74 @@ router.get('/by-skills', candidateController.getCandidatesBySkills);
  *         description: Server error
  */
 // CV Management APIs
-router.post('/cv/upload', upload.single('cv'), candidateController.uploadCV);
+router.post('/cv/upload', authenticateToken, (req, res, next) => {
+  getMulterUpload({
+    entity: 'candidates',
+    type: 'cvs',
+    id: req.user.id,
+    allowedTypes: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+  }).single('cv')(req, res, next);
+}, candidateController.uploadCV);
 router.get('/cv/:id', candidateController.getCV);
 router.delete('/cv/:id', candidateController.deleteCV);
+
+/**
+ * @swagger
+ * /api/candidates/cv/upload/{candidateId}:
+ *   post:
+ *     summary: Upload a CV for a candidate by ID
+ *     tags: [Candidates]
+ *     parameters:
+ *       - in: path
+ *         name: candidateId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Candidate ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               cv:
+ *                 type: string
+ *                 format: binary
+ *                 description: CV file (PDF, DOC, DOCX)
+ *     responses:
+ *       200:
+ *         description: CV uploaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 cvUrl:
+ *                   type: string
+ *                   format: uri
+ *       400:
+ *         description: candidateId or file missing
+ *       404:
+ *         description: Candidate not found
+ *       500:
+ *         description: Server error
+ */
+// Upload CV by candidateId (from params, no JWT required)
+router.post('/cv/upload/:candidateId', (req, res, next) => {
+  const candidateId = req.params.candidateId;
+  getMulterUpload({
+    entity: 'candidates',
+    type: 'cvs',
+    id: candidateId,
+    allowedTypes: [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ]
+  }).single('cv')(req, res, next);
+}, candidateController.uploadCVById);
 
 module.exports = router; 

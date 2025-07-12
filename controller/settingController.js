@@ -92,7 +92,13 @@ exports.uploadLogo = async (req, res) => {
     }
 
     const userId = req.user.id;
-    const logoUrl = `/uploads/settings/logos/${req.file.filename}`;
+    const logoUrl = `${req.protocol}://${req.get('host')}/uploads/settings/logos/${req.file.filename}`;
+
+    // Debug logs
+    console.log('protocol:', req.protocol);
+    console.log('host:', req.get('host'));
+    console.log('file:', req.file);
+    console.log('logoUrl:', logoUrl);
 
     // Update settings with new logo URL
     let settings = await Setting.findOne({ where: { userId } });
@@ -114,6 +120,47 @@ exports.uploadLogo = async (req, res) => {
   }
 };
 
+// Upload logo (new endpoint /api/settings/upload-logo1)
+exports.uploadLogo1 = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ 
+        message: 'No logo file provided' 
+      });
+    }
+
+    const userId = req.user.id;
+    // Construct absolute URL for the uploaded logo
+    const protocol = req.protocol;
+    const host = req.get('host');
+    const filename = req.file.filename;
+    const logoUrl = `${protocol}://${host}/uploads/settings/logos/${filename}`;
+
+    // Debug logs
+    console.log('protocol:', protocol);
+    console.log('host:', host);
+    console.log('file:', req.file);
+    console.log('logoUrl:', logoUrl);
+
+    // Update or create settings for the user
+    let settings = await Setting.findOne({ where: { userId } });
+    if (!settings) {
+      settings = await Setting.create({ userId });
+    }
+    await settings.update({ logoUrl });
+
+    res.status(200).json({
+      message: 'Logo uploaded successfully (v1)',
+      logoUrl
+    });
+  } catch (err) {
+    res.status(500).json({ 
+      message: 'Server error', 
+      error: err.message 
+    });
+  }
+};
+
 // Upload cover photo
 exports.uploadCoverPhoto = async (req, res) => {
   try {
@@ -124,7 +171,14 @@ exports.uploadCoverPhoto = async (req, res) => {
     }
 
     const userId = req.user.id;
-    const coverPhotoUrl = `/uploads/settings/covers/${req.file.filename}`;
+    const coverPhotoUrl = `${req.protocol}://${req.get('host')}/uploads/settings/covers/${req.file.filename}`;
+
+    // Debug logs
+    console.log('Cover photo upload - protocol:', req.protocol);
+    console.log('Cover photo upload - host:', req.get('host'));
+    console.log('Cover photo upload - file:', req.file);
+    console.log('Cover photo upload - coverPhotoUrl:', coverPhotoUrl);
+    console.log('Cover photo upload - userId:', userId);
 
     // Update settings with new cover photo URL
     let settings = await Setting.findOne({ where: { userId } });
@@ -139,6 +193,7 @@ exports.uploadCoverPhoto = async (req, res) => {
       coverPhotoUrl
     });
   } catch (err) {
+    console.error('Cover photo upload error:', err);
     res.status(500).json({ 
       message: 'Server error', 
       error: err.message 

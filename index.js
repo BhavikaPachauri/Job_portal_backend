@@ -14,9 +14,12 @@ const settingRoutes = require('./routes/setting');
 const postJobRoutes = require('./routes/postJob');
 const candidateRoutes = require('./routes/candidate');
 const recruiterRoutes = require('./routes/recruiter');
+const adminAuthRoutes = require('./routes/adminAuth');
 const path = require('path');
 const session = require('express-session');
-const passport = require('./config/passport');
+const stateRoutes = require('./routes/state');
+
+// MySQL Workbench direct connection test (edit credentials as needed)
 
 
 const app = express();
@@ -37,14 +40,14 @@ app.use('/api/settings', settingRoutes);
 app.use('/api/post-jobs', postJobRoutes);
 app.use('/api/candidates', candidateRoutes);
 app.use('/api/recruiters', recruiterRoutes);
+app.use('/api/admin/auth', adminAuthRoutes);
+app.use('/api/locations', stateRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your_secret_key',
   resave: false,
   saveUninitialized: false,
 }));
-app.use(passport.initialize());
-app.use(passport.session());
 
 
 (async () => {
@@ -61,4 +64,3 @@ app.get('/',(req,res)=>{
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
-

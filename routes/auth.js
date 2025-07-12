@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const authController = require('../controller/authController');
 const { authenticateToken } = require('../middleware/authMiddleware');
-const passport = require('passport');
 
 /**
  * @swagger
@@ -127,6 +126,57 @@ router.post('/forgot-password', authController.forgotPassword);
 
 /**
  * @swagger
+ * /api/auth/verify-reset-token:
+ *   post:
+ *     summary: Verify if a reset token is valid
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: Reset token to verify
+ *                 example: "abc123def456..."
+ *     responses:
+ *       200:
+ *         description: Token is valid
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Token is valid"
+ *                 valid:
+ *                   type: boolean
+ *                   example: true
+ *       400:
+ *         description: Invalid or expired token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Invalid or expired token"
+ *                 valid:
+ *                   type: boolean
+ *                   example: false
+ *       500:
+ *         description: Server error
+ */
+router.post('/verify-reset-token', authController.verifyResetToken);
+
+/**
+ * @swagger
  * /api/auth/reset-password:
  *   post:
  *     summary: Reset password using token
@@ -172,50 +222,7 @@ router.post('/forgot-password', authController.forgotPassword);
  */
 router.post('/reset-password', authController.resetPassword);
 
-/**
- * @swagger
- * /api/auth/google:
- *   get:
- *     summary: Login with Google OAuth
- *     tags: [Auth]
- *     description: Redirects the user to Google for authentication.
- *     responses:
- *       302:
- *         description: Redirects to Google OAuth consent screen
- */
-router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
-/**
- * @swagger
- * /api/auth/google/callback:
- *   get:
- *     summary: Google OAuth callback
- *     tags: [Auth]
- *     description: Callback endpoint for Google to redirect to after authentication. On success, returns user info; on failure, redirects to login.
- *     responses:
- *       200:
- *         description: Google login successful, returns user info
- *       302:
- *         description: Redirects to login on failure
- */
-router.get('/google/callback', passport.authenticate('google', {
-  failureRedirect: '/api/auth/login',
-}), authController.googleLoginSuccess);
-
-/**
- * @swagger
- * /api/auth/google/success:
- *   get:
- *     summary: Google login success
- *     tags: [Auth]
- *     description: Returns user info if authenticated via Google.
- *     responses:
- *       200:
- *         description: Google login successful, returns user info
- *       401:
- *         description: Not authenticated
- */
-router.get('/google/success', authController.googleLoginSuccess);
 
 /**
  * @swagger

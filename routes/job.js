@@ -219,6 +219,38 @@ router.get('/', jobController.listJobs);
 
 /**
  * @swagger
+ * /api/jobs/featured:
+ *   get:
+ *     summary: Get featured jobs
+ *     tags: [Job]
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 5
+ *         description: Number of featured jobs to return
+ *     responses:
+ *       200:
+ *         description: Featured jobs retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 jobs:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Job'
+ *       500:
+ *         description: Server error
+ */
+router.get('/featured', jobController.getFeaturedJobs);
+
+/**
+ * @swagger
  * /api/jobs/{id}:
  *   get:
  *     summary: Get job by ID
@@ -444,38 +476,6 @@ router.put('/:id', jobController.updateJob);
  *         description: Server error
  */
 router.delete('/:id', jobController.deleteJob);
-
-/**
- * @swagger
- * /api/jobs/featured:
- *   get:
- *     summary: Get featured jobs
- *     tags: [Job]
- *     parameters:
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 5
- *         description: Number of featured jobs to return
- *     responses:
- *       200:
- *         description: Featured jobs retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                 jobs:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/Job'
- *       500:
- *         description: Server error
- */
-router.get('/featured', jobController.getFeaturedJobs);
 
 /**
  * @swagger

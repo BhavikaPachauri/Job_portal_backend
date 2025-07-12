@@ -11,7 +11,8 @@ const options = {
     },
     servers: [
       {
-        url: 'https://job-portal-backend-d1le.onrender.com',
+        // url: 'https://job-portal-backend-d1le.onrender.com',
+        url: 'http://localhost:3000/',
       },
     ],
     components: {

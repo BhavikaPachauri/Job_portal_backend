@@ -329,15 +329,13 @@ exports.uploadPhoto = async (req, res) => {
         message: 'No file provided' 
       });
     }
-
     const uploadedFile = {
       filename: req.file.filename,
       originalname: req.file.originalname,
       mimetype: req.file.mimetype,
       size: req.file.size,
-      url: `/uploads/candidates/photos/${req.file.filename}`
+      url: `/uploads/candidates/photos/${req.user.id}/${req.file.filename}`
     };
-
     res.status(200).json({
       message: 'Photo uploaded successfully',
       file: uploadedFile
@@ -429,7 +427,7 @@ exports.getCandidatesBySkills = async (req, res) => {
 // Upload CV
 exports.uploadCV = async (req, res) => {
   try {
-    const { candidateId } = req.body;
+    const candidateId = req.user.id;
     if (!candidateId) {
       return res.status(400).json({ message: 'candidateId is required' });
     }
@@ -440,7 +438,29 @@ exports.uploadCV = async (req, res) => {
     if (!candidate) {
       return res.status(404).json({ message: 'Candidate not found' });
     }
-    const cvUrl = `/uploads/candidates/cvs/${req.file.filename}`;
+    const cvUrl = `/uploads/candidates/cvs/${candidateId}/${req.file.filename}`;
+    await candidate.update({ cv_url: cvUrl });
+    res.status(200).json({ message: 'CV uploaded successfully', cvUrl });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// Upload CV by candidateId (from params)
+exports.uploadCVById = async (req, res) => {
+  try {
+    const candidateId = req.params.candidateId;
+    if (!candidateId) {
+      return res.status(400).json({ message: 'candidateId is required' });
+    }
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file provided' });
+    }
+    const candidate = await Candidate.findByPk(candidateId);
+    if (!candidate) {
+      return res.status(404).json({ message: 'Candidate not found' });
+    }
+    const cvUrl = `/uploads/candidates/cvs/${candidateId}/${req.file.filename}`;
     await candidate.update({ cv_url: cvUrl });
     res.status(200).json({ message: 'CV uploaded successfully', cvUrl });
   } catch (err) {
